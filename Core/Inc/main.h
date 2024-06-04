@@ -31,12 +31,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#if 0
-#include "stm32f4_discovery.h"
-#include "stm32f4_discovery_audio.h"
-#include "waveplayer.h"
-#include "ff.h"
-#include "ff_gen_drv.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -46,13 +41,7 @@ extern "C" {
 
 /* Exported constants --------------------------------------------------------*/
 /* USER CODE BEGIN EC */
-typedef enum
-{
-  MSC_APPLICATION_IDLE = 0,
-  MSC_APPLICATION_START,
-  MSC_APPLICATION_RUNNING,
-}
-MSC_ApplicationTypeDef;
+
 /* You can change the Wave file name as you need, but do not exceed 11 characters */
 #define WAVE_NAME "0:audio_sample.wav"
 
@@ -62,8 +51,7 @@ MSC_ApplicationTypeDef;
 
 /* Defines for the Audio used commands */
 #define CMD_PLAY           ((uint32_t)0x00)
-#define CMD_RECORD         ((uint32_t)0x01)
-#define CMD_STOP           ((uint32_t)0x02)
+#define CMD_STOP           ((uint32_t)0x01)
 
 /* Defines for LEDs lighting */
 #define LED3_TOGGLE      0x03  /* Toggle LED3 */
@@ -79,7 +67,6 @@ MSC_ApplicationTypeDef;
 
 #define REPEAT_ON        ((uint32_t)0x00) /* Replay Status in ON */
 #define REPEAT_OFF       ((uint32_t)0x01) /* Replay Status in OFF */
-#endif
 /* USER CODE END EC */
 
 /* Exported macro ------------------------------------------------------------*/

@@ -25,7 +25,8 @@
 #include "usbh_msc.h"
 
 /* USER CODE BEGIN Includes */
-
+#include "waveplayer.h"
+#include "ff.h"
 /* USER CODE END Includes */
 
 /* USER CODE BEGIN PV */
@@ -101,7 +102,9 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
   break;
 
   case HOST_USER_DISCONNECTION:
+  WavePlayer_CallBack();
   Appli_state = APPLICATION_DISCONNECT;
+  f_mount(NULL, (TCHAR const*)"", 0);
   break;
 
   case HOST_USER_CLASS_ACTIVE:

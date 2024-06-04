@@ -17,7 +17,12 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include "waveplayer.h"
 #include "main.h"
+#include "stm32f4_discovery.h"
+#include "stm32f4_discovery_audio.h"
+#include "ff.h"
+#include "usb_host.h"
 
 /** @addtogroup STM32F4-Discovery_Audio_Player_Recorder
 * @{
@@ -63,13 +68,9 @@ extern __IO uint32_t CmdIndex;
 FIL FileRead;
 DIR Directory;
 
-/* Variable used to switch play from audio sample available on USB to recorded file. */
-/* Defined in waverecorder.c */
-extern uint32_t WaveRecStatus;
-
 /* Variable to indicate USB state (start/idle) */
 /* Defined in main.c */
-extern MSC_ApplicationTypeDef AppliState;
+extern ApplicationTypeDef Appli_state;
 
 /* Private function prototypes -----------------------------------------------*/
 
@@ -106,7 +107,7 @@ void WavePlayBack(uint32_t AudioFreq)
   PressCount = 0;
  
   /* Check if the device is connected.*/
-  while((AudioRemSize != 0) && (AppliState != MSC_APPLICATION_IDLE))
+  while((AudioRemSize != 0) && (Appli_state != APPLICATION_IDLE))
   { 
     /* Test on the command: Playing */
     if(CmdIndex == CMD_PLAY)
@@ -226,9 +227,6 @@ void WavePlayerStop(void)
 */
 int WavePlayerInit(uint32_t AudioFreq)
 { 
-  /* MEMS Accelerometer configure to manage PAUSE, RESUME operations */
-  BSP_ACCELERO_Click_ITConfig();
-
   /* Initialize the Audio codec and all related peripherals (I2S, I2C, IOExpander, IOs...) */  
   return(BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_AUTO, Volume, AudioFreq));  
 }
@@ -285,27 +283,14 @@ void WavePlayerStart(void)
 {
   UINT bytesread = 0;
   char path[] = "0:/";
-  char* wavefilename = NULL;
+  char* wavefilename = WAVE_NAME;
   WAVE_FormatTypeDef waveformat;
   
   /* Get the read out protection status */
   if(f_opendir(&Directory, path) == FR_OK)
   {
-    if(WaveRecStatus == 1)
-    {
-      wavefilename = REC_WAVE_NAME;
-    }
-    else
-    {
-      wavefilename = WAVE_NAME; 
-    }
     /* Open the Wave file to be played */
-    if(f_open(&FileRead, wavefilename , FA_READ) != FR_OK)
-    {
-      BSP_LED_On(LED5);
-      CmdIndex = CMD_RECORD;
-    }
-    else
+    if(f_open(&FileRead, wavefilename , FA_READ) == FR_OK)
     {    
       /* Read sizeof(WaveFormat) from the selected file */
       f_read (&FileRead, &waveformat, sizeof(waveformat), &bytesread);
@@ -326,7 +311,7 @@ void WavePlayerStart(void)
   */
 void WavePlayer_CallBack(void)
 {
-  if(AppliState != MSC_APPLICATION_IDLE)
+  if(Appli_state != APPLICATION_IDLE)
   {
     /* Reset the Wave player variables */
     RepeatState = REPEAT_ON;

@@ -25,7 +25,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "waveplayer.h"
+#include "stm32f4_discovery.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +57,31 @@ UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
 /* USER CODE BEGIN PV */
+/* Counter for User button presses. Defined as external in waveplayer.c file */
+__IO uint32_t PressCount = 0;
 
+/* Wave Player Pause/Resume Status. Defined as external in waveplayer.c file */
+__IO uint32_t PauseResumeStatus = IDLE_STATUS;
+
+/* Re-play Wave file status on/off.
+   Defined as external in waveplayer.c file */
+__IO uint32_t RepeatState = REPEAT_ON;
+
+/* Capture Compare Register Value.
+   Defined as external in stm32f4xx_it.c file */
+//__IO uint16_t CCR1Val = 16826;
+
+extern __IO uint32_t LEDsState;
+
+
+__IO uint32_t CmdIndex = CMD_PLAY;
+__IO uint32_t PbPressCheck = 0;
+
+FATFS USBDISKFatFs;          /* File system object for USB disk logical drive */
+char USBDISKPath[4];         /* USB Host logical drive path */
+
+extern ApplicationTypeDef Appli_state;
+static uint8_t  USBH_USR_ApplicationState = USBH_USR_FS_INIT;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -70,7 +95,8 @@ static void MX_CRC_Init(void);
 void StartDefaultTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
-
+static void MSC_Application(void);
+static void COMMAND_AudioExecuteApplication(void);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -95,7 +121,10 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  BSP_LED_Init(LED3);
+  BSP_LED_Init(LED4);
+  BSP_LED_Init(LED5);
+  BSP_LED_Init(LED6);
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -115,7 +144,10 @@ int main(void)
   MX_CRC_Init();
   MX_PDM2PCM_Init();
   /* USER CODE BEGIN 2 */
-
+  /* Turn ON LED4: start of application */
+  BSP_LED_On(LED4);
+  /* Configure USER Button */
+  BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -467,7 +499,64 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+/**
+  * @brief  Main routine for Mass storage application
+  * @param  None
+  * @retval None
+  */
+static void MSC_Application(void)
+{
+  switch (USBH_USR_ApplicationState)
+  {
+  case USBH_USR_AUDIO:
+    /* Go to Audio menu */
+    COMMAND_AudioExecuteApplication();
 
+    /* Set user initialization flag */
+    USBH_USR_ApplicationState = USBH_USR_FS_INIT;
+    break;
+
+  case USBH_USR_FS_INIT:
+    /* Initializes the File System */
+    if (f_mount(&USBDISKFatFs, (TCHAR const*)USBDISKPath, 0 ) != FR_OK )
+    {
+      /* FatFs initialisation fails */
+      Error_Handler();
+    }
+
+    /* Go to menu */
+    USBH_USR_ApplicationState = USBH_USR_AUDIO;
+    break;
+
+  default:
+    break;
+  }
+}
+
+/**
+  * @brief  COMMAND_AudioExecuteApplication.
+  * @param  None
+  * @retval None
+  */
+static void COMMAND_AudioExecuteApplication(void)
+{
+  /* Execute the command switch the command index */
+  switch (CmdIndex)
+  {
+    /* Start Playing from USB Flash memory */
+  case CMD_PLAY:
+      WavePlayerStart();
+    break;
+
+    /* Start Recording in USB Flash memory */
+  case CMD_STOP:
+    WavePlayerStop();
+    break;
+
+  default:
+    break;
+  }
+}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -485,7 +574,17 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+	  switch(Appli_state)
+	  {
+	  case APPLICATION_START:
+		  MSC_Application();
+	  break;
+	  case APPLICATION_IDLE:
+	  default:
+	  break;
+	  }
+
+  	  osDelay(1);
   }
   /* USER CODE END 5 */
 }
