@@ -56,6 +56,9 @@ SPI_HandleTypeDef hspi1;
 UART_HandleTypeDef huart2;
 
 osThreadId defaultTaskHandle;
+osThreadId serialTaskHandle;
+osMessageQId serialRxQueueHandle;
+osMessageQId serialTxQueueHandle;
 /* USER CODE BEGIN PV */
 /* Counter for User button presses. Defined as external in waveplayer.c file */
 __IO uint32_t PressCount = 0;
@@ -93,8 +96,10 @@ static void MX_SPI1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_CRC_Init(void);
 void StartDefaultTask(void const * argument);
+void StartSerialTask(void const * argument);
 
 /* USER CODE BEGIN PFP */
+void StartSerialTask(void const * argument);
 static void MSC_Application(void);
 static void COMMAND_AudioExecuteApplication(void);
 /* USER CODE END PFP */
@@ -146,8 +151,18 @@ int main(void)
   /* USER CODE BEGIN 2 */
   /* Turn ON LED4: start of application */
   BSP_LED_On(LED4);
+
+  /* Initialize the Repeat state */
+  RepeatState = REPEAT_ON;
+
+  /* Turn OFF all LEDs */
+  LEDsState = LEDS_OFF;
+
   /* Configure USER Button */
   BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
+
+  if(FATFS_LinkDriver(&USBH_Driver, USBDISKPath) == 0)
+  {
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -162,6 +177,15 @@ int main(void)
   /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
+  /* Create the queue(s) */
+  /* definition and creation of serialRxQueue */
+  osMessageQDef(serialRxQueue, 128, uint8_t);
+  serialRxQueueHandle = osMessageCreate(osMessageQ(serialRxQueue), NULL);
+
+  /* definition and creation of serialTxQueue */
+  osMessageQDef(serialTxQueue, 64, uint8_t);
+  serialTxQueueHandle = osMessageCreate(osMessageQ(serialTxQueue), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
@@ -170,6 +194,10 @@ int main(void)
   /* definition and creation of defaultTask */
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of serialTask */
+  osThreadDef(serialTask, StartSerialTask, osPriorityNormal, 0, 128);
+  serialTaskHandle = osThreadCreate(osThread(serialTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -187,6 +215,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+  }
   }
   /* USER CODE END 3 */
 }
@@ -587,6 +616,32 @@ void StartDefaultTask(void const * argument)
   	  osDelay(1);
   }
   /* USER CODE END 5 */
+}
+
+/* USER CODE BEGIN Header_StartSerialTask */
+/**
+* @brief Function implementing the serialTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartSerialTask */
+void StartSerialTask(void const * argument)
+{
+  /* USER CODE BEGIN StartSerialTask */
+  /* Infinite loop */
+  for(;;)
+  {
+	  // get data from queue
+	  osEvent event = osMessageGet(serialRxQueueHandle, osWaitForever);
+	  if(event.status == osEventMessage)
+	  {
+		  uint8_t data = *(uint8_t*)event.value.p;
+	  }
+	  	// Serial parser
+	  	// assign to player tasks
+    osDelay(1);
+  }
+  /* USER CODE END StartSerialTask */
 }
 
 /**
