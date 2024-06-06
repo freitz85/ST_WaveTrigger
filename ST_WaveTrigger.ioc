@@ -2,9 +2,10 @@
 CAD.formats=[{"id"\:42,"cad_product"\:"KiCAD v6+","cad_family"\:"KiCAD"}]
 CAD.pinconfig=Dual
 CAD.provider=
-FATFS.IPParameters=_FS_LOCK,_FS_READONLY
+FATFS.IPParameters=_FS_LOCK,_FS_READONLY,_VOLUMES
 FATFS._FS_LOCK=0
 FATFS._FS_READONLY=1
+FATFS._VOLUMES=2
 FREERTOS.FootprintOK=true
 FREERTOS.IPParameters=Tasks01,configUSE_NEWLIB_REENTRANT,FootprintOK,Queues01
 FREERTOS.Queues01=serialRxQueue,128,uint8_t,0,Dynamic,NULL,NULL;serialTxQueue,64,uint8_t,0,Dynamic,NULL,NULL
