@@ -91,6 +91,9 @@ void Wavetrigger::DoCommand()
 	case CMD_SET_REPORTING:
 		CmdSetReporting();
 		break;
+	case CMD_GET_STATUS:
+		CmdGetStatus();
+		break;
 	default:
 		// do nothing
 		break;
@@ -102,8 +105,8 @@ void Wavetrigger::DoCommand()
 void Wavetrigger::SendTrackReport(uint16_t trackNumber, uint8_t voice, uint8_t state)
 {
 	char info[4];
-	info[0] = (uint8_t)m_numTracks;
-	info[1] = m_numTracks>>8;
+	info[0] = (uint8_t)trackNumber;
+	info[1] = trackNumber>>8;
 	info[2] = voice;
 	info[3] = state;
 
@@ -115,7 +118,7 @@ voice* Wavetrigger::GetFreeVoice()
 	voice* pVoice = nullptr;
 	for(uint8_t n=0; n<NUM_VOICES; n++)
 	{
-		if((voices[n].playFlag == 0) && (voices[n].playFlag == 0))
+		if((voices[n].playFlag == false) && (voices[n].lockFlag == false))
 		{
 			pVoice = &voices[n];
 			break;
@@ -158,9 +161,26 @@ void Wavetrigger::CmdGetSysInfo(){
 	char info[3];
 	info[0] = NUM_VOICES;
 	info[1] = (uint8_t)m_numTracks;
-	info[2] = m_numTracks>>8;
+	info[2] = m_numTracks >> 8;
 
 	SendResponse(RSP_SYSTEM_INFO, info, sizeof(info));
+}
+
+void Wavetrigger::CmdGetStatus(){
+	char status[NUM_VOICES*2];
+	uint8_t numPlaying = 0;
+
+	for(uint8_t n=0; n<NUM_VOICES; n++)
+	{
+		if(voices[n].playFlag)
+		{
+			numPlaying++;
+			status[n] = (uint8_t)voices[n].trackNumber;
+			status[n+1] = voices[n].trackNumber >> 8;
+		}
+	}
+
+	SendResponse(RSP_STATUS, status, numPlaying*2);
 }
 
 void Wavetrigger::CmdTrackControl(){
@@ -191,7 +211,10 @@ void Wavetrigger::CmdTrackControl(){
 }
 
 void Wavetrigger::CmdStopAll(){
-	// for each track in list, disable play flag
+	for(uint8_t n=0; n<NUM_VOICES; n++)
+	{
+		voices[n].playFlag = false;
+	}
 }
 
 void Wavetrigger::CmdTrackVolume(){

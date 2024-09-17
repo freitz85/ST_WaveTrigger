@@ -12,6 +12,7 @@
 #define CMD_TRACK_CONTROL       0x03
 #define CMD_STOP_ALL          	0x04
 #define CMD_MASTER_VOLUME       0x05
+#define CMD_GET_STATUS			0x07
 #define CMD_TRACK_VOLUME        0x08
 #define CMD_AMP_POWER         	0x09
 #define CMD_TRACK_FADE          0x0a
@@ -99,6 +100,7 @@ private:
 	void SendResponse(uint8_t cmd, void* pData, uint8_t dataSize);
 	void CmdGetVersion();
 	void CmdGetSysInfo();
+	void CmdGetStatus();
 	void CmdTrackControl();
 	void CmdStopAll();
 	void CmdTrackVolume();
