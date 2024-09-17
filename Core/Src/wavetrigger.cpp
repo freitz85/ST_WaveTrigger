@@ -186,18 +186,37 @@ void Wavetrigger::CmdGetStatus(){
 void Wavetrigger::CmdTrackControl(){
 	uint16_t trackNumber = m_rxData[1] + (m_rxData[2] << 8);
 	uint8_t lockFlag = m_rxData[3];
+	voice* pVoice = GetVoice(trackNumber);
 
 	switch(m_rxData[0])
 	{
 	case TRK_PLAY_SOLO:
-		break;
+		CmdStopAll();
+		// fall through to play poly
 	case TRK_PLAY_POLY:
+		pVoice = GetFreeVoice();
+		if(pVoice){
+			pVoice->trackNumber = trackNumber;
+			pVoice->lockFlag = lockFlag;
+			pVoice->offset = 0;
+			pVoice->playFlag = true;
+		}
 		break;
 	case TRK_PAUSE:
+		if(pVoice){
+			pVoice->playFlag = false;
+		}
 		break;
 	case TRK_RESUME:
+		if(pVoice){
+			pVoice->playFlag = true;
+		}
 		break;
 	case TRK_STOP:
+		if(pVoice){
+			pVoice->playFlag = false;
+			pVoice->offset = 0;
+		}
 		break;
 	case TRK_LOOP_ON:
 		break;
@@ -208,6 +227,11 @@ void Wavetrigger::CmdTrackControl(){
 	default:
 		break;
 	};
+
+	if(pVoice){
+		pVoice->trackNumber = trackNumber;
+		pVoice->lockFlag = lockFlag;
+	}
 }
 
 void Wavetrigger::CmdStopAll(){

@@ -6,3 +6,5 @@
 .launch
 
 .DS_Store
+
+*.launch
