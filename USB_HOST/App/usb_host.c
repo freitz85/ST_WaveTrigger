@@ -103,16 +103,15 @@ static void USBH_UserProcess  (USBH_HandleTypeDef *phost, uint8_t id)
 
   case HOST_USER_DISCONNECTION:
   WavePlayer_CallBack();
-  Appli_state = APPLICATION_DISCONNECT;
+  Appli_state = APPLICATION_IDLE;
   f_mount(NULL, (TCHAR const*)"", 0);
   break;
 
   case HOST_USER_CLASS_ACTIVE:
-  Appli_state = APPLICATION_READY;
+  Appli_state = APPLICATION_START;
   break;
 
   case HOST_USER_CONNECTION:
-  Appli_state = APPLICATION_START;
   break;
 
   default:

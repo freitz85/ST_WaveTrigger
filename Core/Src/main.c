@@ -160,9 +160,6 @@ int main(void)
 
   /* Configure USER Button */
   BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
-
-  //if(FATFS_LinkDriver(&USBH_Driver, USBDISKPath) == 0)
-  {
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -210,7 +207,6 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  }
   while (1)
   {
     /* USER CODE END WHILE */
