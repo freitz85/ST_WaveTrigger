@@ -29,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "waveplayer.h"
 #include "stm32f4_discovery.h"
+#include "serial.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -178,6 +179,7 @@ int main(void)
 
   /* USER CODE BEGIN Creation_Task0 */
   OS_TASK_Create(&TaskCB0, "Task0", 100, Task0, Stack0, sizeof(Stack0), 2);  // Create Task0
+  StartSerialTask();
   /* USER CODE END Creation_Task0 */
 
   /* Start embOS */

@@ -22,6 +22,7 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "serial.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -190,7 +191,7 @@ void USART2_IRQHandler(void)
   HAL_StatusTypeDef status = HAL_UART_Receive_IT(&huart2, &data, 1);
   if(status == HAL_OK)
   {
-	  //osMessagePut(serialRxQueueHandle, data, 0);
+	  OS_MAILBOX_Put1(&RxMailboxCB, &data);
   }
   /* USER CODE END USART2_IRQn 1 */
 }
