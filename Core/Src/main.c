@@ -18,7 +18,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cmsis_os.h"
+/* Scheduler includes. */
+#include "RTOS.h"
+
 #include "fatfs.h"
 #include "pdm2pcm.h"
 #include "usb_host.h"
@@ -56,10 +58,11 @@ SPI_HandleTypeDef hspi1;
 
 UART_HandleTypeDef huart2;
 
-osThreadId defaultTaskHandle;
-osThreadId serialTaskHandle;
-osMessageQId serialRxQueueHandle;
-osMessageQId serialTxQueueHandle;
+/* USER CODE BEGIN Declarations_Task0 */
+static OS_TASK         TaskCB0;                  // Control block for Task0
+static OS_STACKPTR int Stack0[512];              // Stack for Task0
+/* USER CODE END Declarations_Task0 */
+
 /* USER CODE BEGIN PV */
 /* Counter for User button presses. Defined as external in waveplayer.c file */
 __IO uint32_t PressCount = 0;
@@ -97,11 +100,14 @@ static void MX_I2S3_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_CRC_Init(void);
-void StartDefaultTask(void const * argument);
-void StartSerialTask(void const * argument);
+
+/* USER CODE BEGIN Prototype_Task0 */
+static void Task0(void);
+/* USER CODE END Prototype_Task0 */
+
+void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
-void StartSerialTask(void const * argument);
 static void MSC_Application(void);
 static void COMMAND_AudioExecuteApplication(void);
 /* USER CODE END PFP */
@@ -147,6 +153,7 @@ int main(void)
   MX_I2C1_Init();
   MX_I2S3_Init();
   MX_SPI1_Init();
+  MX_USB_HOST_Init();
   MX_USART2_UART_Init();
   MX_FATFS_Init();
   MX_CRC_Init();
@@ -165,54 +172,23 @@ int main(void)
   BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
   /* USER CODE END 2 */
 
-  /* USER CODE BEGIN RTOS_MUTEX */
-  /* add mutexes, ... */
-  /* USER CODE END RTOS_MUTEX */
+  /* Initialize the embOS kernel and configure the hardware parameters for embOS */
+  OS_Init();
+  OS_InitHW();
 
-  /* USER CODE BEGIN RTOS_SEMAPHORES */
-  /* add semaphores, ... */
-  /* USER CODE END RTOS_SEMAPHORES */
+  /* USER CODE BEGIN Creation_Task0 */
+  OS_TASK_Create(&TaskCB0, "Task0", 100, Task0, Stack0, sizeof(Stack0), 2);  // Create Task0
+  /* USER CODE END Creation_Task0 */
 
-  /* USER CODE BEGIN RTOS_TIMERS */
-  /* start timers, add new ones, ... */
-  /* USER CODE END RTOS_TIMERS */
-
-  /* Create the queue(s) */
-  /* definition and creation of serialRxQueue */
-  osMessageQDef(serialRxQueue, 128, uint8_t);
-  serialRxQueueHandle = osMessageCreate(osMessageQ(serialRxQueue), NULL);
-
-  /* definition and creation of serialTxQueue */
-  osMessageQDef(serialTxQueue, 64, uint8_t);
-  serialTxQueueHandle = osMessageCreate(osMessageQ(serialTxQueue), NULL);
-
-  /* USER CODE BEGIN RTOS_QUEUES */
-  /* add queues, ... */
-  /* USER CODE END RTOS_QUEUES */
-
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-
-  /* definition and creation of serialTask */
-  osThreadDef(serialTask, StartSerialTask, osPriorityNormal, 0, 128);
-  serialTaskHandle = osThreadCreate(osThread(serialTask), NULL);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
-  /* Start scheduler */
-  osKernelStart();
-
-  /* We should never get here as control is now taken by the scheduler */
+  /* Start embOS */
+  OS_Start();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
     /* USER CODE END WHILE */
+    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
   }
@@ -603,61 +579,29 @@ static void COMMAND_AudioExecuteApplication(void)
 }
 /* USER CODE END 4 */
 
-/* USER CODE BEGIN Header_StartDefaultTask */
+/* USER CODE BEGIN Task0 */
 /**
-  * @brief  Function implementing the defaultTask thread.
-  * @param  argument: Not used
+  * @brief Function implementing Task0.
   * @retval None
   */
-/* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void const * argument)
-{
-  /* init code for USB_HOST */
-  MX_USB_HOST_Init();
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-	  switch(Appli_state)
-	  {
-	  case APPLICATION_START:
+void Task0(void) {
+	while (1) {
+		MX_USB_HOST_Process();
+
+		switch(Appli_state)
+		{
+		case APPLICATION_START:
 		  MSC_Application();
-	  break;
-	  case APPLICATION_IDLE:
-	  default:
-	  break;
-	  }
+		break;
+		case APPLICATION_IDLE:
+		default:
+		break;
+		}
 
-  	  osDelay(1);
-  }
-  /* USER CODE END 5 */
+		osDelay(1);
+	}
 }
-
-/* USER CODE BEGIN Header_StartSerialTask */
-/**
-* @brief Function implementing the serialTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartSerialTask */
-void StartSerialTask(void const * argument)
-{
-  /* USER CODE BEGIN StartSerialTask */
-  /* Infinite loop */
-  for(;;)
-  {
-	  // get data from queue
-	  osEvent event = osMessageGet(serialRxQueueHandle, osWaitForever);
-	  if(event.status == osEventMessage)
-	  {
-		  uint8_t data = *(uint8_t*)event.value.p;
-	  }
-	  	// Serial parser
-	  	// assign to player tasks
-    osDelay(1);
-  }
-  /* USER CODE END StartSerialTask */
-}
+/* USER CODE END Task0 */
 
 /**
   * @brief  Period elapsed callback in non blocking mode

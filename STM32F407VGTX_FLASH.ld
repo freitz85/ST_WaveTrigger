@@ -191,9 +191,14 @@ SECTIONS
     . = ALIGN(8);
     PROVIDE ( end = . );
     PROVIDE ( _end = . );
+    __heap_start__ = .;
     . = . + _Min_Heap_Size;
+    . = ALIGN(8);
+    __heap_end__ = .;
+    __stack_start__ = .;
     . = . + _Min_Stack_Size;
     . = ALIGN(8);
+    __stack_end__ = .;
   } >RAM
 
   /* Remove information from the compiler libraries */

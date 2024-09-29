@@ -190,7 +190,7 @@ void USART2_IRQHandler(void)
   HAL_StatusTypeDef status = HAL_UART_Receive_IT(&huart2, &data, 1);
   if(status == HAL_OK)
   {
-	  osMessagePut(serialRxQueueHandle, data, 0);
+	  //osMessagePut(serialRxQueueHandle, data, 0);
   }
   /* USER CODE END USART2_IRQn 1 */
 }
